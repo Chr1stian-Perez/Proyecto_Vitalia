@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { createMedication } from "@/lib/firebase-medications"
+import "@/lib/firebase-config"
 import {
   Dialog,
   DialogContent,
@@ -77,23 +79,31 @@ export default function MedicationsPage() {
     endDate: "",
   })
 
-  const handleAddMedication = () => {
-    const newMedication: Medication = {
-      id: Date.now(),
-      name: formData.name,
-      dosage: formData.dosage,
-      format: formData.format,
-      frequency: formData.frequency,
-      times: formData.times,
-      notes: formData.notes,
-      startDate: formData.startDate,
-      endDate: formData.endDate || undefined,
-    }
-
-    setMedications([...medications, newMedication])
-    resetForm()
-    setIsDialogOpen(false)
+  const handleAddMedication = async () => {
+  const newMedication = {
+    userId: "demo-user", // ← ¡Reemplaza esto con el uid real del usuario logueado si lo tienes!
+    name: formData.name,
+    dosage: formData.dosage,
+    format: formData.format,
+    frequency: formData.frequency,
+    times: formData.times,
+    notes: formData.notes,
+    startDate: formData.startDate,
+    endDate: formData.endDate || undefined,
   }
+
+  const result = await createMedication(newMedication)
+
+  if (result.success) {
+    setMedications([...medications, result.data]) // añade también el ID del documento
+    console.log("✅ Medicamento guardado en Firestore:", result.data)
+  } else {
+    console.error("❌ Error al guardar en Firestore:", result.error)
+  }
+
+  resetForm()
+  setIsDialogOpen(false)
+}
 
   const handleEditMedication = (medication: Medication) => {
     setEditingMedication(medication)

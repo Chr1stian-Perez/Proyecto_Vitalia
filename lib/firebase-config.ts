@@ -15,6 +15,9 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 }
 
+// 👇 Agrega esta línea justo aquí
+console.log("🔥 Firebase conectado a:", firebaseConfig.projectId)
+
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig)
 
@@ -25,3 +28,6 @@ export const messaging = typeof window !== "undefined" ? getMessaging(app) : nul
 export const storage = getStorage(app)
 
 export default app
+
+console.log("🔥 Proyecto Firebase:", firebaseConfig.projectId)
+console.log("📦 API Key:", firebaseConfig.apiKey)

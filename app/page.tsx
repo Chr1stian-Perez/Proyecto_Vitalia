@@ -48,9 +48,12 @@ const upcomingReminders = [
 export default function Dashboard() {
   const [user, setUser] = useState({ name: "María González", plan: "Premium" })
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [mounted, setMounted] = useState(false)
+
   const router = useRouter()
 
   useEffect(() => {
+    setMounted(true)
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
@@ -81,7 +84,11 @@ export default function Dashboard() {
               </Badge>
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                <p className="text-xs text-gray-500">{currentTime.toLocaleTimeString()}</p>
+                {mounted && (
+                  <p className="text-xs text-gray-500">
+                    {currentTime.toLocaleTimeString("es-EC", { hour12: true })}
+                  </p>
+                )}
               </div>
             </div>
           </div>

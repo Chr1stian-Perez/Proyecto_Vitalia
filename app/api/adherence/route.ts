@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import "@/lib/firebase-config"
 
 // Simulación de logs de adherencia
 const adherenceLogs: any[] = []

@@ -44,11 +44,19 @@ export const getUserMedications = async (userId: string) => {
 // Crear nuevo medicamento
 export const createMedication = async (medicationData: Omit<Medication, "id" | "createdAt">) => {
   try {
+    // 🔍 Validación mínima para evitar errores silenciosos
+    if (!medicationData.userId) {
+      console.error("🚨 Error: userId está vacío o indefinido. No se guardará el medicamento.")
+      return { success: false, error: "userId es requerido" }
+    }
+
     const newMedication = {
       ...medicationData,
       active: true,
       createdAt: new Date().toISOString(),
     }
+
+    console.log("🚀 Enviando medicamento a Firestore:", newMedication)
 
     const docRef = await addDoc(collection(db, "medications"), newMedication)
 

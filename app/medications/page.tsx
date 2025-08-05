@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { createMedication } from "@/lib/firebase-medications"
+
+// Importa las funciones de Firebase
+import { getAllUserMedications, getUserMedications, createMedication, updateMedication, deleteMedication } from "@/lib/firebase-medications"
+
 import "@/lib/firebase-config"
 import {
   Dialog,
@@ -21,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Plus, Pill, Clock, Edit, Trash2, Calendar } from "lucide-react"
 
 interface Medication {
-  id: number
+  id: string
   name: string
   dosage: string
   format: string
@@ -33,7 +36,7 @@ interface Medication {
 }
 
 export default function MedicationsPage() {
-  const [medications, setMedications] = useState<Medication[]>([
+  /*const [medications, setMedications] = useState<Medication[]>([
     {
       id: 1,
       name: "Omeprazol",
@@ -64,7 +67,27 @@ export default function MedicationsPage() {
       times: ["20:00"],
       startDate: "2024-02-01",
     },
-  ])
+  ])*/
+  const [medications, setMedications] = useState<Medication[]>([])
+
+  // Cargar medicamentos desde Firestore al iniciar
+  useEffect(() => {
+  const fetchAllMedications = async () => {
+    const result = await getAllUserMedications("demo-user")
+    if (result.success) {
+      setMedications(result.data ?? [])
+      console.log("📥 Medicamentos cargados:", result.data)
+    } else {
+      console.error("❌ Error al cargar medicamentos:", result.error)
+    }
+  }
+
+    fetchAllMedications()
+  }, [])
+
+
+
+  //
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null)
@@ -120,7 +143,7 @@ export default function MedicationsPage() {
     setIsDialogOpen(true)
   }
 
-  const handleUpdateMedication = () => {
+  /*const handleUpdateMedication = () => {
     if (!editingMedication) return
 
     const updatedMedications = medications.map((med) =>
@@ -143,10 +166,53 @@ export default function MedicationsPage() {
     resetForm()
     setEditingMedication(null)
     setIsDialogOpen(false)
+  }*/
+ const handleUpdateMedication = async () => {
+  if (!editingMedication) return
+
+    const updates = {
+      name: formData.name,
+      dosage: formData.dosage,
+      format: formData.format,
+      frequency: formData.frequency,
+      times: formData.times,
+      notes: formData.notes,
+      startDate: formData.startDate,
+      endDate: formData.endDate || undefined,
+    }
+
+    // 🔁 Actualizar en Firestore
+    const result = await updateMedication(editingMedication.id.toString(), updates)
+
+    if (result.success) {
+      // 🧠 Actualizar en el estado local
+      const updatedMedications = medications.map((med) =>
+        med.id === editingMedication.id ? { ...med, ...updates } : med
+      )
+      setMedications(updatedMedications)
+      console.log("✅ Medicamento actualizado correctamente en Firestore:", updates)
+    } else {
+      console.error("❌ Error al actualizar medicamento:", result.error)
+    }
+
+    resetForm()
+    setEditingMedication(null)
+    setIsDialogOpen(false)
   }
 
-  const handleDeleteMedication = (id: number) => {
+  /*const handleDeleteMedication = (id: number) => {
     setMedications(medications.filter((med) => med.id !== id))
+  }*/
+  const handleDeleteMedication = async (id: number) => {
+    // El ID de Firestore debe estar en `id` si se guardó desde createMedication
+    const result = await deleteMedication(id.toString())
+
+    if (result.success) {
+      setMedications(medications.filter((med) => med.id !== id))
+      console.log("🗑️ Medicamento marcado como inactivo en Firestore. ID:", id)
+    } else {
+      console.error("❌ Error al eliminar medicamento en Firestore:", result.error)
+    }
   }
 
   const resetForm = () => {

@@ -270,9 +270,19 @@ export default function PharmacyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-green-800">Farmacias Vitalia</h1>
-          <p className="text-gray-600 mt-2">Encuentra medicamentos y gestiona tu farmacia</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-green-800">Farmacias Vitalia</h1>
+            <p className="text-gray-600 mt-2">Encuentra medicamentos y gestiona tu farmacia</p>
+          </div>
+
+          <Button
+            variant="outline"
+            className="text-green-800 border-green-800 hover:bg-green-100"
+            onClick={() => router.push('/')} // Ajusta según tu ruta real
+          >
+            ← Volver a productos
+          </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { useRouter } from "next/navigation"
 
 // Importa las funciones de Firebase
 import { getAllUserMedications, getUserMedications, createMedication, updateMedication, deleteMedication } from "@/lib/firebase-medications"
@@ -36,6 +37,7 @@ interface Medication {
 }
 
 export default function MedicationsPage() {
+  const router = useRouter()
   /*const [medications, setMedications] = useState<Medication[]>([
     {
       id: 1,
@@ -249,13 +251,23 @@ export default function MedicationsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 p-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-green-800">Mis Medicamentos</h1>
             <p className="text-gray-600 mt-2">Gestiona tu tratamiento médico</p>
           </div>
 
+          <Button
+            variant="outline"
+            className="text-green-800 border-green-800 hover:bg-green-100"
+            onClick={() => router.push('/')} // o '/dashboard' si es tu ruta real
+          >
+            ← Volver al inicio
+          </Button>
+        </div>
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-green-700 hover:bg-green-800" onClick={resetForm}>

@@ -451,13 +451,6 @@ export default function MedicationsPage() {
             </Card>
           ))}
         </div>
-
-
-
-
-
-
-
         {medications.length === 0 && (
           <Card className="border-green-200 text-center py-12">
             <CardContent>

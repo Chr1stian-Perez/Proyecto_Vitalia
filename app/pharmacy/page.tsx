@@ -262,7 +262,6 @@ export default function PharmacyPage() {
     })
   }
 
-
   //
 
   const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -636,46 +635,112 @@ export default function PharmacyPage() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  
-
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                {/* Lista de Productos */}
+                <div className="grid gap-6">
                   {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="flex justify-between items-center p-4 bg-white rounded-lg border border-green-100"
-                    >
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{product.name}</h3>
-                        <p className="text-sm text-gray-600">{product.description}</p>
-                        <div className="flex items-center space-x-4 mt-2">
-                          <Badge variant="secondary">{product.category}</Badge>
-                          <span className="text-sm text-gray-600">Stock: {product.stock}</span>
+                    <Card key={product.id} className="border-green-200">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                              <Package className="w-6 h-6 text-green-600" /> {/* Cambia el ícono si prefieres otro */}
+                            </div>
+                            <div>
+                              <CardTitle className="text-green-800">{product.name}</CardTitle>
+                              <CardDescription>
+                                {product.category} • {product.stock} unidades
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEditProduct(product)}>
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setProductToDelete(product)
+                                setIsDeleteDialogOpen(true)
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-green-800">${product.price}</p>
+                      </CardHeader>
+
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-gray-900">Precio</p>
+                            <p className="text-sm text-gray-600">${product.price.toFixed(2)}</p>
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-gray-900">Descripción</p>
+                            <p className="text-sm text-gray-600">{product.description}</p>
+                          </div>
                         </div>
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-800">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
+                {products.length === 0 && (
+                  <Card className="border-green-200 text-center py-12">
+                    <CardContent>
+                      <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" /> {/* Puedes usar otro ícono si prefieres */}
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No tienes productos registrados</h3>
+                      <p className="text-gray-600 mb-4">
+                        Añade tu primer producto para comenzar a gestionar tu inventario
+                      </p>
+                      <Button className="bg-green-700 hover:bg-green-800" onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Añadir Producto
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar producto?</DialogTitle>
+            <DialogDescription>
+              Estás a punto de eliminar <strong>{productToDelete?.name}</strong>. ¿Estás seguro?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end space-x-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (productToDelete) {
+                  await handleDeleteProduct(productToDelete.id)
+                  setIsDeleteDialogOpen(false)
+                  setProductToDelete(null)
+                }
+              }}
+            >
+              Sí, eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

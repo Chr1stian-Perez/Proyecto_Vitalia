@@ -104,7 +104,7 @@ export default function MedicationsPage() {
 
   const handleAddMedication = async () => {
   const newMedication = {
-    userId: "demo-user", // ← ¡Reemplaza esto con el uid real del usuario logueado si lo tienes!
+    userId: "demo-user", // ← Asegúrate de incluir esto si tu función lo espera
     name: formData.name,
     dosage: formData.dosage,
     format: formData.format,
@@ -118,7 +118,7 @@ export default function MedicationsPage() {
   const result = await createMedication(newMedication)
 
   if (result.success) {
-    setMedications([...medications, result.data]) // añade también el ID del documento
+    setMedications([...medications, result.data as Medication]) // añade también el ID del documento
     console.log("✅ Medicamento guardado en Firestore:", result.data)
   } else {
     console.error("❌ Error al guardar en Firestore:", result.error)
@@ -203,7 +203,7 @@ export default function MedicationsPage() {
   /*const handleDeleteMedication = (id: number) => {
     setMedications(medications.filter((med) => med.id !== id))
   }*/
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  //const [deleteId, setDeleteId] = useState<string | null>(null)
   const [medicationToDelete, setMedicationToDelete] = useState<Medication | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 

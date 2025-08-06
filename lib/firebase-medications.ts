@@ -1,5 +1,5 @@
 // Servicios para gestión de medicamentos con Firestore
-import { collection, doc, addDoc, updateDoc, getDocs, query, where, orderBy } from "firebase/firestore"
+import { collection, doc, deleteDoc, addDoc, updateDoc, getDocs, query, where, orderBy } from "firebase/firestore"
 import { db } from "./firebase-config"
 
 // Estructura del objeto Medication que se usará para tipado TypeScript
@@ -14,8 +14,8 @@ export interface Medication {
   notes?: string                   // Notas adicionales (opcional)
   startDate: string                // Fecha de inicio (formato ISO)
   endDate?: string                 // Fecha de fin (opcional)
-  active: boolean                  // Si el medicamento está activo o fue eliminado (soft delete)
-  createdAt: string                // Fecha de creación del documento
+  active?: boolean                  // Si el medicamento está activo o fue eliminado (soft delete)
+  createdAt?: string                // Fecha de creación del documento
   updatedAt?: string              // Fecha de última actualización (opcional)
 }
 
@@ -204,16 +204,9 @@ export const deleteMedication = async (medicationId: string) => {
 export const deleteMedication = async (medicationId: string) => {
   try {
     const medicationRef = doc(db, "medications", medicationId)
+    await deleteDoc(medicationRef) // 🔥 Esto elimina el documento completo
 
-    const updatePayload = {
-      active: false,
-      updatedAt: new Date().toISOString(),
-    }
-
-    await updateDoc(medicationRef, updatePayload)
-
-    console.log(`🗑️ Medicamento ${medicationId} eliminado lógicamente (active = false)`)
-
+    console.log(`🗑️ Medicamento ${medicationId} eliminado completamente de Firestore`)
     return { success: true }
   } catch (error: any) {
     console.error(`❌ Error al eliminar medicamento ${medicationId}:`, error.message)

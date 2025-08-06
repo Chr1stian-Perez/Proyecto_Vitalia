@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { getAllPharmacies } from "@/lib/firebase-pharmacies"
+import { getAllProducts, createProduct, updateProduct, deleteProduct } from "@/lib/firebase-products"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +52,7 @@ const customerSegments = [
 ]
 
 interface Product {
-  id: number
+  id: string
   name: string
   price: number
   stock: number
@@ -57,30 +60,37 @@ interface Product {
   description: string
 }
 
+interface Pharmacy {
+  id: string
+  name: string
+  address: string
+  phone: string
+  hours: string
+  distanceKm: number
+  rating: number
+  delivery: boolean
+}
+
 export default function PharmacyPage() {
   const [activeTab, setActiveTab] = useState("customer")
   const [searchTerm, setSearchTerm] = useState("")
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      name: "Omeprazol 20mg",
-      price: 30,
-      stock: 150,
-      category: "Gastroenterología",
-      description: "Inhibidor de la bomba de protones",
-    },
-    { id: 2, name: "Metformina 500mg", price: 25, stock: 200, category: "Diabetes", description: "Antidiabético oral" },
-    { id: 3, name: "Losartán 50mg", price: 35, stock: 120, category: "Cardiología", description: "Antihipertensivo" },
-    {
-      id: 4,
-      name: "Atorvastatina 20mg",
-      price: 40,
-      stock: 80,
-      category: "Cardiología",
-      description: "Reductor de colesterol",
-    },
-  ])
+  const [products, setProducts] = useState<Product[]>([])
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const result = await getAllProducts()
+      if (result.success) {
+        setProducts(result.data || [])
+        console.log("✅ Productos cargados:", result.data)
+      } else {
+        console.error("❌ Error al cargar productos:", result.error)
+      }
+    }
+
+    fetchProducts()
+  }, [])
+
+  /*
   const pharmacies = [
     {
       id: 1,
@@ -112,9 +122,49 @@ export default function PharmacyPage() {
       distance: "2.1 km",
       hasDelivery: false,
     },
-  ]
+  ]*/
+
+  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([])
+
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      const result = await getAllPharmacies()
+      if (result.success) {
+        setPharmacies(result.data || [])
+        console.log("✅ Farmacias cargadas:", result.data)
+      } else {
+        console.error("❌ Error al cargar farmacias:", result.error)
+      }
+    }
+
+    fetchPharmacies()
+  }, [])
+  
+  const [showCreateForm, setShowCreateForm] = useState(false)
+
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    stock: 0,
+    category: "",
+  })
+
+  const handleCreateProduct = async () => {
+    const result = await createProduct(newProduct)
+    if (result.success) {
+      console.log("✅ Producto creado:", result.id)
+      setShowCreateForm(false)
+      setNewProduct({ name: "", description: "", price: 0, stock: 0, category: "" })
+      const updated = await getAllProducts()
+      if (updated.success) setProducts(updated.data)
+    } else {
+      console.error("❌ Error al crear producto:", result.error)
+    }
+  }
 
   const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  const router = useRouter()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 p-4">
@@ -207,14 +257,14 @@ export default function PharmacyPage() {
                             <Star className="w-4 h-4 text-yellow-500 fill-current" />
                             <span className="text-sm text-gray-600">{pharmacy.rating}</span>
                           </div>
-                          {pharmacy.hasDelivery && <Badge className="bg-green-100 text-green-800">Delivery</Badge>}
+                          {pharmacy.delivery && <Badge>Delivery</Badge>}
                         </div>
 
                         <div className="space-y-2 text-sm text-gray-600">
                           <div className="flex items-center space-x-2">
                             <MapPin className="w-4 h-4" />
                             <span>
-                              {pharmacy.address} • {pharmacy.distance}
+                              {pharmacy.address} • {pharmacy.distanceKm} km
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -229,7 +279,10 @@ export default function PharmacyPage() {
                       </div>
 
                       <div className="flex flex-col space-y-2">
-                        <Button className="bg-green-700 hover:bg-green-800">
+                        <Button
+                          className="bg-green-700 hover:bg-green-800"
+                          onClick={() => router.push("/products")}
+                        >
                           <ShoppingCart className="w-4 h-4 mr-2" />
                           Ver Productos
                         </Button>
@@ -387,10 +440,68 @@ export default function PharmacyPage() {
                     <CardTitle className="text-green-800">Gestión de Catálogo</CardTitle>
                     <CardDescription>Administra tu inventario de productos</CardDescription>
                   </div>
-                  <Button className="bg-green-700 hover:bg-green-800">
+                  <Button onClick={() => setShowCreateForm(true)} className="bg-green-700 hover:bg-green-800">
                     <Plus className="w-4 h-4 mr-2" />
                     Añadir Producto
                   </Button>
+                  {showCreateForm && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+                      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                        <h2 className="text-xl font-semibold text-green-700 mb-1">Nuevo Producto</h2>
+                        <p className="text-sm text-gray-600 mb-4">Agrega un nuevo producto al catálogo</p>
+
+                        <Input
+                          placeholder="Nombre del producto"
+                          value={newProduct.name}
+                          onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                          className="mb-2"
+                        />
+                        <Input
+                          placeholder="Descripción"
+                          value={newProduct.description}
+                          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                          className="mb-2"
+                        />
+                        <div className="flex gap-2 mb-2">
+                          <Input
+                            type="number"
+                            placeholder="Precio"
+                            value={newProduct.price}
+                            onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Stock"
+                            value={newProduct.stock}
+                            onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
+                          />
+                        </div>
+                        <Input
+                          placeholder="Categoría"
+                          value={newProduct.category}
+                          onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                          className="mb-4"
+                        />
+
+                        <div className="flex justify-between">
+                          <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateProduct}>
+                            Añadir Producto
+                          </Button>
+                          <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+                            Cancelar
+                          </Button>
+                        </div>
+
+                        {/* Botón X de cierre arriba a la derecha */}
+                        <button
+                          className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
+                          onClick={() => setShowCreateForm(false)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>

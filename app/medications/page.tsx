@@ -203,7 +203,11 @@ export default function MedicationsPage() {
   /*const handleDeleteMedication = (id: number) => {
     setMedications(medications.filter((med) => med.id !== id))
   }*/
-  const handleDeleteMedication = async (id: number) => {
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [medicationToDelete, setMedicationToDelete] = useState<Medication | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  const handleDeleteMedication = async (id: string) => {
     // El ID de Firestore debe estar en `id` si se guardó desde createMedication
     const result = await deleteMedication(id.toString())
 
@@ -400,7 +404,10 @@ export default function MedicationsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDeleteMedication(medication.id)}
+                      onClick={() => {
+                        setMedicationToDelete(medication)
+                        setIsDeleteDialogOpen(true)
+                      }}
                       className="text-red-600 hover:text-red-800"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -456,6 +463,37 @@ export default function MedicationsPage() {
           </Card>
         )}
       </div>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar medicamento?</DialogTitle>
+            <DialogDescription>
+              Estás a punto de eliminar <strong>{medicationToDelete?.name}</strong>. ¿Estás seguro?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end space-x-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={async () => {
+                if (medicationToDelete) {
+                  await handleDeleteMedication(medicationToDelete.id)
+                  setIsDeleteDialogOpen(false)
+                  setMedicationToDelete(null)
+                }
+              }}
+            >
+              Sí, eliminar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

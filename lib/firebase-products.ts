@@ -1,6 +1,14 @@
 import { collection, doc, addDoc, getDocs, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "./firebase-config"
 
+export interface Product {
+    name: string
+    description: string
+    price: number
+    stock: number
+    category: string
+}
+
 export const getAllProducts = async () => {
     try {
         const snapshot = await getDocs(collection(db, "products"))
@@ -25,40 +33,43 @@ export const getAllProducts = async () => {
     }
 }
 
-export const createProduct = async (product: {
-    name: string
-    price: number
-    stock: number
-    category: string
-    description: string
-    }) => {
+export const createProduct = async (productData: Product) => {
     try {
-        const docRef = await addDoc(collection(db, "products"), product)
-        console.log("✅ Producto creado con ID:", docRef.id)
-        return { success: true, id: docRef.id }
+        const newProduct = {
+        ...productData,
+        active: true,
+        createdAt: new Date().toISOString(),
+        }
+
+        console.log("📦 Preparando creación de producto:", newProduct)
+
+        const docRef = await addDoc(collection(db, "products"), newProduct)
+
+        console.log(`✅ Producto creado con ID: ${docRef.id}`)
+
+        return { success: true, data: { id: docRef.id, ...newProduct } }
     } catch (error: any) {
         console.error("❌ Error al crear producto:", error.message)
         return { success: false, error: error.message }
     }
 }
 
-export const updateProduct = async (
-    productId: string,
-    updatedFields: {
-        name?: string
-        price?: number
-        stock?: number
-        category?: string
-        description?: string
-    }
-    ) => {
+export const updateProduct = async (productId: string, updates: Product) => {
     try {
         const productRef = doc(db, "products", productId)
-        await updateDoc(productRef, updatedFields)
-        console.log("✅ Producto actualizado:", productId)
+
+        const updatePayload = {
+        ...updates,
+        updatedAt: new Date().toISOString(),
+        }
+
+        await updateDoc(productRef, updatePayload)
+
+        console.log(`🔄 Producto ${productId} actualizado con:`, updatePayload)
+
         return { success: true }
     } catch (error: any) {
-        console.error("❌ Error al actualizar producto:", error.message)
+        console.error(`❌ Error al actualizar producto ${productId}:`, error.message)
         return { success: false, error: error.message }
     }
 }
@@ -66,11 +77,12 @@ export const updateProduct = async (
 export const deleteProduct = async (productId: string) => {
     try {
         const productRef = doc(db, "products", productId)
-        await deleteDoc(productRef)
-        console.log("🗑️ Producto eliminado:", productId)
+        await deleteDoc(productRef) // 🔥 Esto elimina el documento completo
+
+        console.log(`🗑️ Producto ${productId} eliminado completamente de Firestore`)
         return { success: true }
     } catch (error: any) {
-        console.error("❌ Error al eliminar producto:", error.message)
+        console.error(`❌ Error al eliminar producto ${productId}:`, error.message)
         return { success: false, error: error.message }
     }
 }

@@ -377,6 +377,9 @@ export default function MedicationsPage() {
               </div>
             </DialogContent>
           </Dialog>
+        
+        
+        
         </div>
 
         {/* Lista de Medicamentos */}
@@ -448,6 +451,12 @@ export default function MedicationsPage() {
             </Card>
           ))}
         </div>
+
+
+
+
+
+
 
         {medications.length === 0 && (
           <Card className="border-green-200 text-center py-12">

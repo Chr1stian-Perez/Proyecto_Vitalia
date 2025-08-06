@@ -7,6 +7,7 @@ import { getAllProducts, createProduct, updateProduct, deleteProduct } from "@/l
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
@@ -26,6 +27,17 @@ import {
   Edit,
   Trash2,
 } from "lucide-react"
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 // Datos simulados para el panel de farmacia
 const salesData = [
@@ -140,8 +152,18 @@ export default function PharmacyPage() {
     fetchPharmacies()
   }, [])
   
-  const [showCreateForm, setShowCreateForm] = useState(false)
+  //
 
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    stock: 0,
+    category: "General",
+  })
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -150,18 +172,98 @@ export default function PharmacyPage() {
     category: "",
   })
 
-  const handleCreateProduct = async () => {
+  const handleAddProduct = async () => {
+    const newProduct = {
+      userId: "demo-user",
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      stock: formData.stock,
+      category: formData.category,
+    }
+
     const result = await createProduct(newProduct)
+
     if (result.success) {
-      console.log("✅ Producto creado:", result.id)
-      setShowCreateForm(false)
-      setNewProduct({ name: "", description: "", price: 0, stock: 0, category: "" })
-      const updated = await getAllProducts()
-      if (updated.success) setProducts(updated.data)
+      setProducts([...products, result.data as Product]) // ← agrega el producto al estado
+      console.log("✅ Producto guardado en Firestore:", result.data)
     } else {
-      console.error("❌ Error al crear producto:", result.error)
+      console.error("❌ Error al guardar producto en Firestore:", result.error)
+    }
+
+    resetForm()
+    setIsDialogOpen(false)
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product)
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      category: product.category,
+    })
+    setIsDialogOpen(true)
+  }
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return
+
+    const updates = {
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      stock: formData.stock,
+      category: formData.category,
+    }
+
+    // 🔁 Actualizar en Firestore
+    const result = await updateProduct(editingProduct.id.toString(), updates)
+
+    if (result.success) {
+      // 🧠 Actualizar en el estado local
+      const updatedProducts = products.map((prod) =>
+        prod.id === editingProduct.id ? { ...prod, ...updates } : prod
+      )
+      setProducts(updatedProducts)
+      console.log("✅ Producto actualizado correctamente en Firestore:", updates)
+    } else {
+      console.error("❌ Error al actualizar producto:", result.error)
+    }
+
+    resetForm()
+    setEditingProduct(null)
+    setIsDialogOpen(false)
+  }
+
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  const handleDeleteProduct = async (id: string) => {
+    // El ID de Firestore debe estar en `id` si se guardó desde createProduct
+    const result = await deleteProduct(id.toString())
+
+    if (result.success) {
+      setProducts(products.filter((prod) => prod.id !== id))
+      console.log("🗑️ Producto eliminado correctamente en Firestore. ID:", id)
+    } else {
+      console.error("❌ Error al eliminar producto en Firestore:", result.error)
     }
   }
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      description: "",
+      price: 0,
+      stock: 0,
+      category: "General",
+    })
+  }
+
+
+  //
 
   const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(searchTerm.toLowerCase()))
   const router = useRouter()
@@ -440,68 +542,102 @@ export default function PharmacyPage() {
                     <CardTitle className="text-green-800">Gestión de Catálogo</CardTitle>
                     <CardDescription>Administra tu inventario de productos</CardDescription>
                   </div>
-                  <Button onClick={() => setShowCreateForm(true)} className="bg-green-700 hover:bg-green-800">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Añadir Producto
-                  </Button>
-                  {showCreateForm && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-                      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
-                        <h2 className="text-xl font-semibold text-green-700 mb-1">Nuevo Producto</h2>
-                        <p className="text-sm text-gray-600 mb-4">Agrega un nuevo producto al catálogo</p>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-green-700 hover:bg-green-800" onClick={resetForm}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Añadir Producto
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="text-green-800">
+                          {editingProduct ? "Editar Producto" : "Nuevo Producto"}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {editingProduct
+                            ? "Modifica los datos del producto"
+                            : "Añade un nuevo producto al inventario"}
+                        </DialogDescription>
+                      </DialogHeader>
 
-                        <Input
-                          placeholder="Nombre del producto"
-                          value={newProduct.name}
-                          onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                          className="mb-2"
-                        />
-                        <Input
-                          placeholder="Descripción"
-                          value={newProduct.description}
-                          onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                          className="mb-2"
-                        />
-                        <div className="flex gap-2 mb-2">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="name">Nombre del Producto</Label>
                           <Input
-                            type="number"
-                            placeholder="Precio"
-                            value={newProduct.price}
-                            onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                          />
-                          <Input
-                            type="number"
-                            placeholder="Stock"
-                            value={newProduct.stock}
-                            onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) })}
+                            id="name"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="Ej: Paracetamol 500mg"
                           />
                         </div>
-                        <Input
-                          placeholder="Categoría"
-                          value={newProduct.category}
-                          onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-                          className="mb-4"
-                        />
 
-                        <div className="flex justify-between">
-                          <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateProduct}>
-                            Añadir Producto
-                          </Button>
-                          <Button variant="outline" onClick={() => setShowCreateForm(false)}>
-                            Cancelar
-                          </Button>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Descripción</Label>
+                          <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            placeholder="Ej: Analgésico para dolor leve"
+                          />
                         </div>
 
-                        {/* Botón X de cierre arriba a la derecha */}
-                        <button
-                          className="absolute top-3 right-3 text-gray-500 hover:text-red-600"
-                          onClick={() => setShowCreateForm(false)}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="price">Precio</Label>
+                            <Input
+                              id="price"
+                              type="number"
+                              min={0}
+                              value={formData.price}
+                              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                              placeholder="Ej: 2.5"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="stock">Stock</Label>
+                            <Input
+                              id="stock"
+                              type="number"
+                              min={0}
+                              value={formData.stock}
+                              onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
+                              placeholder="Ej: 100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Categoría</Label>
+                          <Select
+                            value={formData.category}
+                            onValueChange={(value) => setFormData({ ...formData, category: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="General">General</SelectItem>
+                              <SelectItem value="Neurología">Neurología</SelectItem>
+                              <SelectItem value="Cardiología">Cardiología</SelectItem>
+                              <SelectItem value="Pediatría">Pediatría</SelectItem>
+                              <SelectItem value="Ginecología">Ginecología</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Button
+                          onClick={editingProduct ? handleUpdateProduct : handleAddProduct}
+                          className="w-full bg-green-700 hover:bg-green-800"
+                          disabled={!formData.name || !formData.price || !formData.stock}
                         >
-                          ✕
-                        </button>
+                          {editingProduct ? "Actualizar Producto" : "Añadir Producto"}
+                        </Button>
                       </div>
-                    </div>
-                  )}
+                    </DialogContent>
+                  </Dialog>
+                  
+
                 </div>
               </CardHeader>
               <CardContent>

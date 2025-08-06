@@ -103,30 +103,30 @@ export default function MedicationsPage() {
   })
 
   const handleAddMedication = async () => {
-  const newMedication = {
-    userId: "demo-user", // ← Asegúrate de incluir esto si tu función lo espera
-    name: formData.name,
-    dosage: formData.dosage,
-    format: formData.format,
-    frequency: formData.frequency,
-    times: formData.times,
-    notes: formData.notes,
-    startDate: formData.startDate,
-    endDate: formData.endDate || undefined,
+    const newMedication = {
+      userId: "demo-user", // ← Asegúrate de incluir esto si tu función lo espera
+      name: formData.name,
+      dosage: formData.dosage,
+      format: formData.format,
+      frequency: formData.frequency,
+      times: formData.times,
+      notes: formData.notes,
+      startDate: formData.startDate,
+      endDate: formData.endDate || undefined,
+    }
+
+    const result = await createMedication(newMedication)
+
+    if (result.success) {
+      setMedications([...medications, result.data as Medication]) // añade también el ID del documento
+      console.log("✅ Medicamento guardado en Firestore:", result.data)
+    } else {
+      console.error("❌ Error al guardar en Firestore:", result.error)
+    }
+
+    resetForm()
+    setIsDialogOpen(false)
   }
-
-  const result = await createMedication(newMedication)
-
-  if (result.success) {
-    setMedications([...medications, result.data as Medication]) // añade también el ID del documento
-    console.log("✅ Medicamento guardado en Firestore:", result.data)
-  } else {
-    console.error("❌ Error al guardar en Firestore:", result.error)
-  }
-
-  resetForm()
-  setIsDialogOpen(false)
-}
 
   const handleEditMedication = (medication: Medication) => {
     setEditingMedication(medication)

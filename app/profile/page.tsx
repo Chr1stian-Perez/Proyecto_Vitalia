@@ -50,7 +50,7 @@ export default function ProfilePage() {
             <div className="text-right">
             <Button
                 className="bg-green-700 hover:bg-green-800 text-white"
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/dashboard")}
             >
                 ← Volver al inicio
             </Button>

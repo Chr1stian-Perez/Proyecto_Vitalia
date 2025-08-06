@@ -260,7 +260,7 @@ export default function MedicationsPage() {
           <Button
             variant="outline"
             className="text-green-800 border-green-800 hover:bg-green-100"
-            onClick={() => router.push('/')} // o '/dashboard' si es tu ruta real
+            onClick={() => router.push('/dashboard')} // o '/dashboard' si es tu ruta real
           >
             ← Volver al inicio
           </Button>

@@ -279,7 +279,7 @@ export default function PharmacyPage() {
           <Button
             variant="outline"
             className="text-green-800 border-green-800 hover:bg-green-100"
-            onClick={() => router.push('/')} // Ajusta según tu ruta real
+            onClick={() => router.push('/dashboard')} // Ajusta según tu ruta real
           >
             ← Volver a productos
           </Button>

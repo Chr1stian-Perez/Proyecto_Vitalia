@@ -289,7 +289,11 @@ export default function Dashboard() {
               <ShoppingCart className="w-5 h-5" />
               <span className="text-xs">Farmacias</span>
             </Button>
-            <Button variant="ghost" className="flex flex-col items-center space-y-1 text-gray-600">
+            <Button
+              variant="ghost"
+              className="flex flex-col items-center space-y-1 text-gray-600"
+              onClick={() => router.push("/profile")}
+            >
               <Users className="w-5 h-5" />
               <span className="text-xs">Perfil</span>
             </Button>

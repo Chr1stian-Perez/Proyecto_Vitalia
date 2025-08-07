@@ -4,10 +4,58 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { registerUser } from "@/lib/firebase-auth"
 
 export default function AuthPage() {
   const router = useRouter()
-  const [isLogin, setIsLogin] = useState(false) // false = registro | true = login
+  const [isLogin, setIsLogin] = useState(false)
+
+  const [form, setForm] = useState({
+    name: "",
+    birthdate: "",
+    gender: "",
+    civilStatus: "",
+    phone: "",
+    mobile: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  })
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!isLogin && form.password !== form.confirmPassword) {
+      alert("Las contraseñas no coinciden")
+      return
+    }
+
+    if (isLogin) {
+      // lógica login (aún no implementada aquí)
+    } else {
+      const res = await registerUser(
+        form.email,
+        form.password,
+        form.name,
+        form.birthdate,
+        form.gender,
+        form.civilStatus,
+        form.phone,
+        form.mobile
+      )
+
+      if (res.success) {
+        alert("Registro exitoso ✅")
+        router.push("/dashboard") // o la ruta que uses
+      } else {
+        alert("Error: " + res.error)
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
@@ -16,32 +64,32 @@ export default function AuthPage() {
           {isLogin ? "Iniciar sesión" : "Registrarse"}
         </h2>
 
-        <form className="space-y-4">
-          {/* Campos comunes */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <>
-              <Input placeholder="Nombre completo" />
-              <Input type="date" placeholder="Fecha de nacimiento" />
-              <select className="w-full px-3 py-2 border rounded-md text-sm text-gray-700">
+              <Input name="name" placeholder="Nombre completo" value={form.name} onChange={handleChange} />
+              <Input name="birthdate" type="date" value={form.birthdate} onChange={handleChange} />
+              <select name="gender" className="w-full border px-3 py-2 rounded-md" value={form.gender} onChange={handleChange}>
                 <option value="">Seleccione género</option>
-                <option value="femenino">Femenino</option>
                 <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
               </select>
-              <select className="w-full px-3 py-2 border rounded-md text-sm text-gray-700">
+              <select name="civilStatus" className="w-full border px-3 py-2 rounded-md" value={form.civilStatus} onChange={handleChange}>
                 <option value="">Estado civil</option>
                 <option value="soltero">Soltero</option>
                 <option value="casado">Casado</option>
+                <option value="viudo">Viudo</option>
               </select>
-              <Input type="tel" placeholder="Teléfono fijo" />
-              <Input type="tel" placeholder="Número de celular" />
+              <Input name="phone" placeholder="Teléfono fijo" value={form.phone} onChange={handleChange} />
+              <Input name="mobile" placeholder="Número de celular" value={form.mobile} onChange={handleChange} />
             </>
           )}
 
-          <Input placeholder="Correo electrónico" />
-          <Input type="password" placeholder="Contraseña" />
+          <Input name="email" placeholder="Correo electrónico" value={form.email} onChange={handleChange} />
+          <Input name="password" type="password" placeholder="Contraseña" value={form.password} onChange={handleChange} />
 
           {!isLogin && (
-            <Input type="password" placeholder="Repetir contraseña" />
+            <Input name="confirmPassword" type="password" placeholder="Repetir contraseña" value={form.confirmPassword} onChange={handleChange} />
           )}
 
           <Button type="submit" className="w-full bg-green-700 text-white">
@@ -50,22 +98,14 @@ export default function AuthPage() {
 
           <p className="text-sm text-center">
             {isLogin ? (
-              <>
-                ¿No tienes cuenta?{" "}
-                <span
-                  onClick={() => setIsLogin(false)}
-                  className="text-green-700 hover:underline cursor-pointer"
-                >
+              <>¿No tienes cuenta?{" "}
+                <span onClick={() => setIsLogin(false)} className="text-green-700 hover:underline cursor-pointer">
                   Regístrate
                 </span>
               </>
             ) : (
-              <>
-                ¿Ya tienes una cuenta?{" "}
-                <span
-                  onClick={() => setIsLogin(true)}
-                  className="text-green-700 hover:underline cursor-pointer"
-                >
+              <>¿Ya tienes una cuenta?{" "}
+                <span onClick={() => setIsLogin(true)} className="text-green-700 hover:underline cursor-pointer">
                   Inicia sesión
                 </span>
               </>

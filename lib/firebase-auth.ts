@@ -13,6 +13,11 @@ export interface UserProfile {
   uid: string
   email: string
   name: string
+  birthdate: string
+  gender: string
+  civilStatus: string
+  phone: string
+  mobile: string
   plan: "Freemium" | "Premium"
   registrationDate: string
   preferences: {
@@ -23,17 +28,29 @@ export interface UserProfile {
 }
 
 // Registrar nuevo usuario
-export const registerUser = async (email: string, password: string, name: string) => {
+export const registerUser = async (
+  email: string,
+  password: string,
+  name: string,
+  birthdate: string,
+  gender: string,
+  civilStatus: string,
+  phone: string,
+  mobile: string
+) => {
   try {
-    // Crear usuario en Firebase Auth
     const userCredential = await createUserWithEmailAndPassword(auth, email, password)
     const user = userCredential.user
 
-    // Crear perfil en Firestore
     const userProfile: UserProfile = {
       uid: user.uid,
       email: user.email!,
       name,
+      birthdate,
+      gender,
+      civilStatus,
+      phone,
+      mobile,
       plan: "Freemium",
       registrationDate: new Date().toISOString(),
       preferences: {

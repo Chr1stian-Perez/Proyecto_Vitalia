@@ -44,23 +44,24 @@ export const registerUser = async (
 
     const userProfile: UserProfile = {
       uid: user.uid,
-      email: user.email!,
+      email,
       name,
-      birthdate,
-      gender,
-      civilStatus,
-      phone,
-      mobile,
       plan: "Freemium",
       registrationDate: new Date().toISOString(),
       preferences: {
         notifications: true,
         reminderSound: true,
-        language: "es",
+        language: "es"
       },
+      birthdate,
+      gender,
+      civilStatus,
+      phone,
+      mobile
     }
 
-    await setDoc(doc(db, "users", user.uid), userProfile)
+    const USERS_COLLECTION = "users"
+    await setDoc(doc(db, USERS_COLLECTION, user.uid), userProfile)
 
     return { success: true, user: userProfile }
   } catch (error: any) {
@@ -76,13 +77,18 @@ export const loginUser = async (email: string, password: string) => {
 
     // Obtener perfil del usuario
     const userDoc = await getDoc(doc(db, "users", user.uid))
+    if (!userDoc.exists()) {
+      return { success: false, error: "Perfil no encontrado en Firestore" }
+    }
     const userProfile = userDoc.data() as UserProfile
 
     return { success: true, user: userProfile }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    const firebaseError = error.code || error.message
+    return { success: false, error: firebaseError }
   }
 }
+
 
 // Cerrar sesión
 export const logoutUser = async () => {

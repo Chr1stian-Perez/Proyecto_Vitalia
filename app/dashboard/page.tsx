@@ -21,6 +21,10 @@ import {
     Cell,
 } from "recharts"
 import { Bell, Calendar, Pill, TrendingUp, Users, ShoppingCart, Activity, Clock } from "lucide-react"
+import { onAuthStateChanged } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
+import { auth, db } from "@/lib/firebase-config"
+import { signOut } from "firebase/auth"
 
 // Datos simulados para los gráficos
 const adherenceData = [
@@ -47,7 +51,7 @@ const upcomingReminders = [
 ]
 
 export default function Dashboard() {
-    const [user, setUser] = useState({ name: "María González", plan: "Premium" })
+    const [user, setUser] = useState<{ name: string; plan: string }>({ name: "", plan: "" })
     const [currentTime, setCurrentTime] = useState(new Date())
     const [mounted, setMounted] = useState(false)
 
@@ -56,19 +60,38 @@ export default function Dashboard() {
     useEffect(() => {
         setMounted(true)
         const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-        return () => clearInterval(timer)
-    }, [])
+
+        // Obtener nombre y plan desde Firestore según el usuario logueado
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            if (currentUser) {
+            const docRef = doc(db, "users", currentUser.uid)
+            const docSnap = await getDoc(docRef)
+            if (docSnap.exists()) {
+                const data = docSnap.data()
+                setUser({ name: data.name, plan: data.plan })
+            }
+            }
+        })
+
+        return () => {
+            clearInterval(timer)
+            unsubscribe()
+        }
+        }, [])
 
     const handleMedicationTaken = (id: number) => {
         // Simular actualización de adherencia
         console.log(`Medicamento ${id} marcado como tomado`)
     }
 
-    const handleLogout = () => {
-    // Si usas Firebase Auth, puedes llamar a signOut(auth)
-    // Aquí se simula borrando datos y redirigiendo al login
-    localStorage.clear() // o sessionStorage.clear()
-    router.push("/") // Ajusta a tu ruta de login
+    const handleLogout = async () => {
+        try {
+            await signOut(auth)
+            router.push("/") // Redirige al login
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error)
+            alert("No se pudo cerrar sesión")
+        }
     }
 
     return (
